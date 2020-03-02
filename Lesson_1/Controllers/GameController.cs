@@ -1,4 +1,5 @@
-﻿using Lesson_1.Models;
+﻿using Lesson_1.Helpers;
+using Lesson_1.Models;
 using System;
 using System.Threading;
 using Timers = System.Timers;
@@ -26,12 +27,12 @@ namespace Lesson_1.Controllers {
         private int additionalTime;
 
         //Событие окончания игры
-        private delegate void GameOverHandler(string message);
+        private delegate void GameOverHandler(object sender,GameEventArgs e);
 
         private event GameOverHandler GameOverEvent;
 
         //Игровые события
-        private delegate void GameEventHandler(string message);
+        private delegate void GameEventHandler(object sender, GameEventArgs e);
 
         private event GameEventHandler GameEvent;
 
@@ -77,38 +78,38 @@ namespace Lesson_1.Controllers {
         }
 
         //Обработка игровых событий
-        private void OnGameEvent(string message) {
+        private void OnGameEvent(object sender, GameEventArgs e) {
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"Game Event : {message}");
+            Console.WriteLine($"Game Event : {e.Message}");
             Console.ForegroundColor = ConsoleColor.White;
         }
 
         //Обработка событий конца игры
-        public void OnGameOverEvent(string message) {
+        public void OnGameOverEvent(object sender, GameEventArgs e) {
             Game.IsGameOver = true;
             timer.Stop();
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Game Over Event : Match <{HomeManager.Team.Name} - {GuestManager.Team.Name}> over. {message}");
+            Console.WriteLine($"Game Over Event : Match <{HomeManager.Team.Name} - {GuestManager.Team.Name}> over. {e.Message}");
             Console.ForegroundColor = ConsoleColor.White;
         }
 
         //Проверка команды
         private void CheckTeam(TeamController teamController) {
             if (teamController.IsCanContinue())
-                GameOverEvent?.Invoke($"{teamController.Team.Name} team - 5 players are injured");
+                GameOverEvent?.Invoke(this,new GameEventArgs($"{teamController.Team.Name} team - 5 players are injured"));
         }
         //Плохая погода, матч закончен
         private void BadWeatherEvent() {
-            GameOverEvent?.Invoke($"Bad weather started the match has been cancelled.");
+            GameOverEvent?.Invoke(this, new GameEventArgs($"Bad weather started the match has been cancelled."));
         }
         //Отсутствие электричества, матч закончен
         private void BlackoutEvent() {
-            GameOverEvent?.Invoke($"Stadium has no electricity the match has been cancelled.");
+            GameOverEvent?.Invoke(this, new GameEventArgs($"Stadium has no electricity the match has been cancelled."));
         }
         //дополнительное время
         private void AdditionalTimeEvent() {
             matchTime += 15;
-            GameEvent?.Invoke($"Match was extended on 15 minutes");
+            GameEvent?.Invoke(this, new GameEventArgs($"Match was extended on 15 minutes"));
         }
 
         private void TimerCallback(object sender, Timers.ElapsedEventArgs e) {
@@ -138,7 +139,7 @@ namespace Lesson_1.Controllers {
                     else
                         result = "Guest Team wins";
                 }
-                GameOverEvent?.Invoke($"Time left. {result}. Score <{HomeManager.Team.TeamScore} - {GuestManager.Team.TeamScore}>");
+                GameOverEvent?.Invoke(this, new GameEventArgs($"Time left. {result}. Score <{HomeManager.Team.TeamScore} - {GuestManager.Team.TeamScore}>"));
                 return;
             }
         }

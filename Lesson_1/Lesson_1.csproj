@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helpers\GameEventArgs.cs" />
+    <Compile Include="Helpers\TeamEventArgs.cs" />
     <Compile Include="Models\Game.cs" />
     <Compile Include="Controllers\GameController.cs" />
     <Compile Include="Controllers\TrainerController.cs" />

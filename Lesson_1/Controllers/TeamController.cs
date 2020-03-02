@@ -1,4 +1,5 @@
-﻿using Lesson_1.Models;
+﻿using Lesson_1.Helpers;
+using Lesson_1.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,8 @@ using System.Threading.Tasks;
 namespace Lesson_1.Controllers {
     public class TeamController {
         //Событие при каком-либо действии
-        public delegate void TeamHandler(string message);
+        //TODO сделать EventArgs
+        public delegate void TeamHandler(object sender,TeamEventArgs e);
         public event TeamHandler TeamNotify;
 
         //делегат для действий
@@ -58,11 +60,11 @@ namespace Lesson_1.Controllers {
             if (playerToInjure.Skill == 0)
             {
                 playerToInjure.CanPlay = false;
-                TeamNotify?.Invoke($"{Team.Name} team player <{playerToInjure.PlayerNumber}> injured and cannot continue");
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToInjure.PlayerNumber}> injured and cannot continue"));
                 PlayerSubstitution(playerToInjure);
             }
             else
-                TeamNotify?.Invoke($"{Team.Name} team player <{playerToInjure.PlayerNumber}> injured ");
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToInjure.PlayerNumber}> injured "));
 
         }
 
@@ -72,7 +74,7 @@ namespace Lesson_1.Controllers {
                 return;
             --Team.SubstitutionsCount;
             player = PlayerController.CreatePlayer(player.PlayerNumber, Team.Trainer.Competency);
-            TeamNotify?.Invoke($"{Team.Name} team player <{player.PlayerNumber}> has been replaced");
+            TeamNotify?.Invoke(this, new TeamEventArgs($"player <{player.PlayerNumber}> has been replaced"));
 
         }
         //Фанатская поддержка
@@ -85,7 +87,7 @@ namespace Lesson_1.Controllers {
                 return;
             playerToSupport.Skill += support;
 
-            TeamNotify?.Invoke($"{Team.Name} team player <{playerToSupport.PlayerNumber}> had fan support");
+            TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToSupport.PlayerNumber}> had fan support"));
         }
         //Попытка забить гол
         private void TryScoreGoal() {
@@ -99,10 +101,10 @@ namespace Lesson_1.Controllers {
             if (chance <= player.Skill + player.Luck)
             {
                 Team.TeamScore++;
-                TeamNotify?.Invoke($"{Team.Name} team player <{player.PlayerNumber}> scored goal | Team score:{Team.TeamScore}");
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{player.PlayerNumber}> scored goal | Team score:{Team.TeamScore}"));
             }
             else
-                TeamNotify?.Invoke($"{Team.Name} team player <{player.PlayerNumber}> missed");
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{player.PlayerNumber}> missed"));
         }
 
         //Может ли состав команды продолжать игру
@@ -110,8 +112,8 @@ namespace Lesson_1.Controllers {
             return Team.Players.Count(player => player.CanPlay) < 7;
         }
         //Обработка событий команды
-        private void OnTeamEvent(string message) {
-            Console.WriteLine($"Team Event : {message}");
+        private void OnTeamEvent(object sender, TeamEventArgs e) {
+            Console.WriteLine($"Team Event : {(sender as TeamController).Team.Name} team - {e.Message}");
         }
     }
 }
