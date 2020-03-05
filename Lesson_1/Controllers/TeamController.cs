@@ -21,7 +21,9 @@ namespace Lesson_1.Controllers {
 
         //Объект команды
         public Team Team { get; private set; }
-       
+
+        //
+        public PlayerController[] PlayerControllers { get; private set; }
         public TeamController() {
             
             actions = new DoAction[] {PlayerInjure,FanSupport,TryScoreGoal };
@@ -30,11 +32,16 @@ namespace Lesson_1.Controllers {
         //инициализация команды
         public void CreateTeam(string teamName) {
             Trainer trainer = TrainerController.CreateTrainer();
+            PlayerControllers = new PlayerController[11];
             Player[] players = new Player[11];
-            for (int i = 0; i < players.Length; i++)
+
+            for (int i = 0; i < PlayerControllers.Length; i++)
             {
-                players[i] = PlayerController.CreatePlayer(i + 1, trainer.Competency);
+                PlayerControllers[i] = new PlayerController();
+                PlayerControllers[i].CreatePlayer(i + 1, trainer.Competency);
+                players[i] = PlayerControllers[i].Player;
             }
+
             Team = new Team(teamName, trainer, players);
             TeamNotify += OnTeamEvent;
         }
@@ -49,67 +56,65 @@ namespace Lesson_1.Controllers {
         //Травма игрока
         private void PlayerInjure() {
 
-            Player playerToInjure = Team.Players.ElementAt(random.Next(0, Team.Players.Length));
+            PlayerController playerToInjure = PlayerControllers.ElementAt(random.Next(0, PlayerControllers.Length));
 
-            if (!playerToInjure.CanPlay)
+            if (!playerToInjure.CanPlay())
                 return;
 
             int injure = random.Next(1, 15);
-            playerToInjure.Skill -= injure;
+            playerToInjure.ReduceSkill(injure);
 
-            if (playerToInjure.Skill == 0)
+            if (!playerToInjure.CanPlay())
             {
-                playerToInjure.CanPlay = false;
-                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToInjure.PlayerNumber}> injured and cannot continue"));
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToInjure.Player.PlayerNumber}> injured and cannot continue"));
                 PlayerSubstitution(playerToInjure);
             }
             else
-                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToInjure.PlayerNumber}> injured "));
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToInjure.Player.PlayerNumber}> injured "));
 
         }
 
         //Замена игрока
-        private void PlayerSubstitution(Player player) {
+        private void PlayerSubstitution(PlayerController playerController) {
             if (Team.SubstitutionsCount == 0)
                 return;
             --Team.SubstitutionsCount;
-            player = PlayerController.CreatePlayer(player.PlayerNumber, Team.Trainer.Competency);
-            TeamNotify?.Invoke(this, new TeamEventArgs($"player <{player.PlayerNumber}> has been replaced"));
+            playerController.CreatePlayer(playerController.Player.PlayerNumber, Team.Trainer.Competency);
+            TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerController.Player.PlayerNumber}> has been replaced"));
 
         }
         //Фанатская поддержка
         private void FanSupport() {
+            PlayerController playerToSupport = PlayerControllers.ElementAt(random.Next(0, PlayerControllers.Length));
+
+            if (!playerToSupport.CanPlay())
+                return; 
             int support = random.Next(1, 10);
+            playerToSupport.IncreasSkill(support);
 
-            Player playerToSupport = Team.Players.ElementAt(random.Next(0, Team.Players.Length));
-
-            if (!playerToSupport.CanPlay)
-                return;
-            playerToSupport.Skill += support;
-
-            TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToSupport.PlayerNumber}> had fan support"));
+            TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerToSupport.Player.PlayerNumber}> had fan support"));
         }
         //Попытка забить гол
         private void TryScoreGoal() {
-            Player player = Team.Players.ElementAt(random.Next(0, Team.Players.Length));
+            PlayerController playerController =PlayerControllers.ElementAt(random.Next(0, PlayerControllers.Length));
 
-            if (!player.CanPlay)
+            if (!playerController.CanPlay())
                 return;
 
             int chance = random.Next(1, 200);
 
-            if (chance <= player.Skill + player.Luck)
+            if (chance <= playerController.PlayerPower)
             {
                 Team.TeamScore++;
-                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{player.PlayerNumber}> scored goal | Team score:{Team.TeamScore}"));
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerController.Player.PlayerNumber}> scored goal | Team score:{Team.TeamScore}"));
             }
             else
-                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{player.PlayerNumber}> missed"));
+                TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerController.Player.PlayerNumber}> missed"));
         }
 
         //Может ли состав команды продолжать игру
         public bool IsCanContinue() {
-            return Team.Players.Count(player => player.CanPlay) < 7;
+            return PlayerControllers.Count(player => player.CanPlay()) < 7;
         }
         //Обработка событий команды
         private void OnTeamEvent(object sender, TeamEventArgs e) {
