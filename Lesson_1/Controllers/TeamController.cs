@@ -1,5 +1,7 @@
 ﻿using Lesson_1.Helpers;
+using Lesson_1.Interfaces;
 using Lesson_1.Models;
+using Lesson_1.Models.DataDetails;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Lesson_1.Controllers {
-    public class TeamController {
+    public class TeamController : ITeamController {
         //Событие при каком-либо действии
         //TODO сделать EventArgs
         public delegate void TeamHandler(object sender,TeamEventArgs e);
@@ -18,10 +20,8 @@ namespace Lesson_1.Controllers {
         DoAction[] actions;
 
         private static readonly Random random = new Random();
-
         //Объект команды
         public Team Team { get; private set; }
-
         //
         public PlayerController[] PlayerControllers { get; private set; }
         public TeamController() {
@@ -30,7 +30,10 @@ namespace Lesson_1.Controllers {
         }
 
         //инициализация команды
-        public void CreateTeam(string teamName) {
+        public void Create(BaseData data) {
+            if (!(data is TeamControllerData))
+                throw new ArgumentException("Invalid data");
+
             Trainer trainer = TrainerController.CreateTrainer();
             PlayerControllers = new PlayerController[11];
             Player[] players = new Player[11];
@@ -38,11 +41,11 @@ namespace Lesson_1.Controllers {
             for (int i = 0; i < PlayerControllers.Length; i++)
             {
                 PlayerControllers[i] = new PlayerController();
-                PlayerControllers[i].CreatePlayer(i + 1, trainer.Competency);
+                PlayerControllers[i].Create(new PlayerControllerData( i + 1, trainer.Competency));
                 players[i] = PlayerControllers[i].Player;
             }
 
-            Team = new Team(teamName, trainer, players);
+            Team = new Team((data as TeamControllerData).TeamName, trainer, players);
             TeamNotify += OnTeamEvent;
         }
 
@@ -79,7 +82,7 @@ namespace Lesson_1.Controllers {
             if (Team.SubstitutionsCount == 0)
                 return;
             --Team.SubstitutionsCount;
-            playerController.CreatePlayer(playerController.Player.PlayerNumber, Team.Trainer.Competency);
+            playerController.Create(new PlayerControllerData(playerController.Player.PlayerNumber, Team.Trainer.Competency));
             TeamNotify?.Invoke(this, new TeamEventArgs($"player <{playerController.Player.PlayerNumber}> has been replaced"));
 
         }

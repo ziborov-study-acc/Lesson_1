@@ -1,12 +1,14 @@
 ﻿using Lesson_1.Helpers;
+using Lesson_1.Interfaces;
 using Lesson_1.Models;
+using Lesson_1.Models.DataDetails;
 using System;
 using System.Threading;
 using Timers = System.Timers;
 
 namespace Lesson_1.Controllers {
 
-    public class GameController {
+    public class GameController : IGameController {
 
         //объект игры
         public Game Game { get; private set; }
@@ -37,9 +39,13 @@ namespace Lesson_1.Controllers {
         private event GameEventHandler GameEvent;
 
         //Инициализация игры
-        public void CreateGame() {
-            GuestManager.CreateTeam("Home");
-            HomeManager.CreateTeam("Guest");
+        public void Create(BaseData data) {
+            if (!(data is GameControllerData))
+                throw new ArgumentException();
+
+            HomeManager.Create(new TeamControllerData((data as GameControllerData).HomeTeamName));
+            GuestManager.Create(new TeamControllerData((data as GameControllerData).GuestTeamName));
+
             GameOverEvent += OnGameOverEvent;
             GameEvent += OnGameEvent;
             Game = new Game(HomeManager.Team, GuestManager.Team);
@@ -85,12 +91,12 @@ namespace Lesson_1.Controllers {
         }
 
         //Обработка событий конца игры
-        public void OnGameOverEvent(object sender, GameEventArgs e) {
+        private void OnGameOverEvent(object sender, GameEventArgs e) {
             Game.IsGameOver = true;
             timer.Stop();
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"Game Over Event : Match <{HomeManager.Team.Name} - {GuestManager.Team.Name}> over. {e.Message}");
-            Console.ForegroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
 
         //Проверка команды

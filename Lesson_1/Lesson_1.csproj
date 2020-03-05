@@ -45,6 +45,14 @@
   <ItemGroup>
     <Compile Include="Helpers\GameEventArgs.cs" />
     <Compile Include="Helpers\TeamEventArgs.cs" />
+    <Compile Include="Interfaces\ICreate.cs" />
+    <Compile Include="Interfaces\IGameController.cs" />
+    <Compile Include="Interfaces\IPlayerController.cs" />
+    <Compile Include="Interfaces\ITeamController.cs" />
+    <Compile Include="Models\DataDetails\BaseData.cs" />
+    <Compile Include="Models\DataDetails\GameControllerData.cs" />
+    <Compile Include="Models\DataDetails\PlayerControllerData.cs" />
+    <Compile Include="Models\DataDetails\TeamControllerData.cs" />
     <Compile Include="Models\Game.cs" />
     <Compile Include="Controllers\GameController.cs" />
     <Compile Include="Controllers\TrainerController.cs" />
